@@ -68,10 +68,29 @@ cargarTema();
 // #                                                                          #
 // ############################################################################
 
+//2. Tarjeta de serie
 const crearTarjetaSerie = (serie) =>{
     const article = document.createElement('article');
     article.className = 'serie-card';
-    article.innerHTML = `<h3 class="serie-card__title">${serie.name}</h3>`;
+    const {name, poster_path, first_air_date, vote_average} = serie;
+
+    //la API a veces trae series sin fecha o sin póster
+    const año = first_air_date ? first_air_date.slice(0, 4) : 'Sin fecha';
+    let imagen = '<p class="serie-card__sin-imagen">Sin imagen</p>';
+    if(poster_path){
+        imagen = `<img class="serie-card__image" src="${IMAGE_URL}${poster_path}" alt="${name}">`;
+    }
+
+    article.innerHTML = `
+        <div class="serie-card__poster">
+            ${imagen}
+            <span class="serie-card__rating">★ ${vote_average.toFixed(1)}</span>
+        </div>
+        <div class="serie-card__content">
+            <h3 class="serie-card__title">${name}</h3>
+            <p class="serie-card__year">📅 ${año}</p>
+        </div>`;
+
     return article;
 };
 
