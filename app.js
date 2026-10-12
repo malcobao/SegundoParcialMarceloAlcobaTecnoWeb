@@ -68,6 +68,16 @@ cargarTema();
 // #                                                                          #
 // ############################################################################
 
+//5. Manejo de errores: según el error se muestra un mensaje u otro
+const manejarError = (error) =>{
+    console.log(error);
+    if(error.message.includes('401')){
+        mostrarError('API Key inválida');
+    }else{
+        mostrarError('Error de conexión');
+    }
+};
+
 //4. Modal de detalle
 const mostrarDetalle = (detalle) =>{
     const {name, overview, number_of_seasons, number_of_episodes, genres, status} = detalle;
@@ -88,9 +98,21 @@ const mostrarDetalle = (detalle) =>{
 const abrirModal = async (id) =>{
     modalBody.innerHTML = '<p class="loading__text">Cargando detalle...</p>';
     modal.classList.add('modal--show');
-    const respuesta = await fetch(`${BASE_URL}/tv/${id}?api_key=${API_KEY}&language=es-ES`);
-    const detalle = await respuesta.json();
-    mostrarDetalle(detalle);
+    try{
+        const respuesta = await fetch(`${BASE_URL}/tv/${id}?api_key=${API_KEY}&language=es-ES`);
+        if(!respuesta.ok){
+            throw new Error(`Error ${respuesta.status}`);
+        }
+        const detalle = await respuesta.json();
+        mostrarDetalle(detalle);
+    }catch(error){
+        console.log(error);
+        if(error.message.includes('401')){
+            modalBody.innerHTML = '<p class="error__message">API Key inválida</p>';
+        }else{
+            modalBody.innerHTML = '<p class="error__message">Error de conexión</p>';
+        }
+    }
 };
 
 const cerrarModal = () =>{
@@ -149,11 +171,19 @@ const obtenerSeriesPopulares = async () =>{
     resultsTitle.textContent = 'Series Populares';
     resultsCount.textContent = '';
     mostrarLoading();
-    const respuesta = await fetch(`${BASE_URL}/tv/popular?api_key=${API_KEY}&language=es-ES`);
-    const datos = await respuesta.json();
-    ocultarLoading();
-    renderizarSeries(datos.results);
-    console.log('Series populares cargadas');
+    try{
+        const respuesta = await fetch(`${BASE_URL}/tv/popular?api_key=${API_KEY}&language=es-ES`);
+        //fetch no da error con un 401, por eso revisamos ok y lanzamos el error nosotros
+        if(!respuesta.ok){
+            throw new Error(`Error ${respuesta.status}`);
+        }
+        const datos = await respuesta.json();
+        ocultarLoading();
+        renderizarSeries(datos.results);
+        console.log('Series populares cargadas');
+    }catch(error){
+        manejarError(error);
+    }
 };
 
 //3. Búsqueda por texto
@@ -161,14 +191,21 @@ const buscarSeries = async (texto) =>{
     resultsTitle.textContent = `Resultados para "${texto}"`;
     resultsCount.textContent = '';
     mostrarLoading();
-    const respuesta = await fetch(`${BASE_URL}/search/tv?api_key=${API_KEY}&query=${encodeURIComponent(texto)}&language=es-ES`);
-    const datos = await respuesta.json();
-    //si el usuario siguió escribiendo, esta respuesta ya es vieja y no se muestra
-    if(texto !== searchInput.value.trim()){
-        return;
+    try{
+        const respuesta = await fetch(`${BASE_URL}/search/tv?api_key=${API_KEY}&query=${encodeURIComponent(texto)}&language=es-ES`);
+        if(!respuesta.ok){
+            throw new Error(`Error ${respuesta.status}`);
+        }
+        const datos = await respuesta.json();
+        //si el usuario siguió escribiendo, esta respuesta ya es vieja y no se muestra
+        if(texto !== searchInput.value.trim()){
+            return;
+        }
+        ocultarLoading();
+        renderizarSeries(datos.results);
+    }catch(error){
+        manejarError(error);
     }
-    ocultarLoading();
-    renderizarSeries(datos.results);
 };
 
 const manejarBusqueda = () =>{
@@ -187,6 +224,7 @@ const limpiarBusqueda = () =>{
 
 searchInput.addEventListener('input', manejarBusqueda);
 clearBtn.addEventListener('click', limpiarBusqueda);
+retryBtn.addEventListener('click', manejarBusqueda);
 modalClose.addEventListener('click', cerrarModal);
 modalOverlay.addEventListener('click', cerrarModal);
 console.log('Eventos configurados');
