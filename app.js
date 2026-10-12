@@ -68,11 +68,40 @@ cargarTema();
 // #                                                                          #
 // ############################################################################
 
+//4. Modal de detalle
+const mostrarDetalle = (detalle) =>{
+    const {name, overview, number_of_seasons, number_of_episodes, genres, status} = detalle;
+    //genres es un arreglo de objetos {id, name}: tomamos solo el nombre y los unimos con comas
+    const generos = genres.map(genero => genero.name).join(', ');
+
+    modalBody.innerHTML = `
+        <h2 class="modal__title">${name}</h2>
+        <p class="modal__subtitle">Géneros: ${generos ? generos : 'Sin géneros'}</p>
+        <div class="modal__info">
+            <span><strong>Temporadas:</strong> ${number_of_seasons}</span>
+            <span><strong>Episodios:</strong> ${number_of_episodes}</span>
+            <span><strong>Estado:</strong> ${status}</span>
+        </div>
+        <p class="modal__overview">${overview ? overview : 'Esta serie no tiene sinopsis en español.'}</p>`;
+};
+
+const abrirModal = async (id) =>{
+    modalBody.innerHTML = '<p class="loading__text">Cargando detalle...</p>';
+    modal.classList.add('modal--show');
+    const respuesta = await fetch(`${BASE_URL}/tv/${id}?api_key=${API_KEY}&language=es-ES`);
+    const detalle = await respuesta.json();
+    mostrarDetalle(detalle);
+};
+
+const cerrarModal = () =>{
+    modal.classList.remove('modal--show');
+};
+
 //2. Tarjeta de serie
 const crearTarjetaSerie = (serie) =>{
     const article = document.createElement('article');
     article.className = 'serie-card';
-    const {name, poster_path, first_air_date, vote_average} = serie;
+    const {id, name, poster_path, first_air_date, vote_average} = serie;
 
     //la API a veces trae series sin fecha o sin póster
     const año = first_air_date ? first_air_date.slice(0, 4) : 'Sin fecha';
@@ -90,6 +119,10 @@ const crearTarjetaSerie = (serie) =>{
             <h3 class="serie-card__title">${name}</h3>
             <p class="serie-card__year">📅 ${año}</p>
         </div>`;
+
+    article.addEventListener('click', () =>{
+        abrirModal(id);
+    });
 
     return article;
 };
@@ -154,6 +187,8 @@ const limpiarBusqueda = () =>{
 
 searchInput.addEventListener('input', manejarBusqueda);
 clearBtn.addEventListener('click', limpiarBusqueda);
+modalClose.addEventListener('click', cerrarModal);
+modalOverlay.addEventListener('click', cerrarModal);
 console.log('Eventos configurados');
 
 obtenerSeriesPopulares();
