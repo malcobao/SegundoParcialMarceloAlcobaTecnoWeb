@@ -123,4 +123,37 @@ const obtenerSeriesPopulares = async () =>{
     console.log('Series populares cargadas');
 };
 
+//3. Búsqueda por texto
+const buscarSeries = async (texto) =>{
+    resultsTitle.textContent = `Resultados para "${texto}"`;
+    resultsCount.textContent = '';
+    mostrarLoading();
+    const respuesta = await fetch(`${BASE_URL}/search/tv?api_key=${API_KEY}&query=${encodeURIComponent(texto)}&language=es-ES`);
+    const datos = await respuesta.json();
+    //si el usuario siguió escribiendo, esta respuesta ya es vieja y no se muestra
+    if(texto !== searchInput.value.trim()){
+        return;
+    }
+    ocultarLoading();
+    renderizarSeries(datos.results);
+};
+
+const manejarBusqueda = () =>{
+    const texto = searchInput.value.trim();
+    if(texto === ''){
+        obtenerSeriesPopulares();
+    }else{
+        buscarSeries(texto);
+    }
+};
+
+const limpiarBusqueda = () =>{
+    searchInput.value = '';
+    obtenerSeriesPopulares();
+};
+
+searchInput.addEventListener('input', manejarBusqueda);
+clearBtn.addEventListener('click', limpiarBusqueda);
+console.log('Eventos configurados');
+
 obtenerSeriesPopulares();
