@@ -68,3 +68,40 @@ cargarTema();
 // #                                                                          #
 // ############################################################################
 
+const crearTarjetaSerie = (serie) =>{
+    const article = document.createElement('article');
+    article.className = 'serie-card';
+    article.innerHTML = `<h3 class="serie-card__title">${serie.name}</h3>`;
+    return article;
+};
+
+const renderizarSeries = (series) =>{
+    seriesGrid.innerHTML = '';
+    if(series.length === 0){
+        resultsCount.textContent = 'No se encontraron series';
+        return;
+    }
+    if(series.length === 1){
+        resultsCount.textContent = '1 resultado';
+    }else{
+        resultsCount.textContent = `${series.length} resultados`;
+    }
+    series.forEach(serie =>{
+        const tarjeta = crearTarjetaSerie(serie);
+        seriesGrid.appendChild(tarjeta);
+    });
+};
+
+//1. Carga inicial: series populares
+const obtenerSeriesPopulares = async () =>{
+    resultsTitle.textContent = 'Series Populares';
+    resultsCount.textContent = '';
+    mostrarLoading();
+    const respuesta = await fetch(`${BASE_URL}/tv/popular?api_key=${API_KEY}&language=es-ES`);
+    const datos = await respuesta.json();
+    ocultarLoading();
+    renderizarSeries(datos.results);
+    console.log('Series populares cargadas');
+};
+
+obtenerSeriesPopulares();
